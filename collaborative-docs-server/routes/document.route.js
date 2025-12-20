@@ -6,8 +6,11 @@ import {
   updateDocument,
   deleteDocument,
 } from "../controllers/document.controller.js";
+import { authenticateToken } from "../middlewares/auth.js";
 
 const router = Router();
+
+router.use(authenticateToken);
 
 router.get("/", getDocuments);
 
