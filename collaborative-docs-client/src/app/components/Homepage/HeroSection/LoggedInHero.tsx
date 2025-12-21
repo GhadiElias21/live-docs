@@ -1,13 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  FaPlus,
-  FaFileAlt,
-  FaClock,
-  FaUsers,
-  FaArrowRight,
-} from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { FaFileAlt, FaClock, FaUsers, FaArrowRight } from "react-icons/fa";
 
 interface LoggedInSectionProps {
   username: string;
@@ -27,6 +22,7 @@ const itemVariants = {
 };
 
 export default function LoggedInHero({ username }: LoggedInSectionProps) {
+  const router = useRouter();
   return (
     <main className="relative z-10 container mx-auto px-6 py-20">
       <motion.div
@@ -35,9 +31,8 @@ export default function LoggedInHero({ username }: LoggedInSectionProps) {
         animate="visible"
         className="max-w-6xl mx-auto"
       >
-        {/* Welcome */}
         <motion.div variants={itemVariants} className="text-center mb-16">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/10 to-teal-400/10 border border-emerald-500/20 mb-6">
+          <div className="inline-flex items-center px-4 py-2  rounded-full bg-gradient-to-r from-emerald-500/10 to-teal-400/10 border border-emerald-500/20 mb-6">
             <FaClock className="w-4 h-4 text-emerald-400 mr-2" />
             <span className="text-sm text-emerald-300">
               Your workspace is ready
@@ -62,9 +57,13 @@ export default function LoggedInHero({ username }: LoggedInSectionProps) {
           variants={itemVariants}
           className="flex flex-col sm:flex-row justify-center gap-4 mb-20"
         >
-          <button className="group px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-bold text-lg flex items-center justify-center gap-2 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all">
-            <FaPlus />
-            New Document
+          <button
+            onClick={() => {
+              router.push("/documents");
+            }}
+            className="group px-8 py-4 rounded-xl cursor-pointer bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-bold text-lg flex items-center justify-center gap-2 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all"
+          >
+            Documents
             <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
           </button>
 
