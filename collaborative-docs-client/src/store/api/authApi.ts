@@ -38,6 +38,7 @@ export const authApi = createApi({
         method: "POST",
         body: data,
       }),
+      invalidatesTags: ["Auth"],
     }),
 
     getMe: builder.query<{ user: User }, void>({

@@ -13,7 +13,6 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { closeAuthModal, openAuthModal } from "@/store/slices/modalSlice";
 import { useLoginMutation, useSignupMutation } from "@/store/api/authApi";
-import { useRouter } from "next/navigation";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -35,7 +34,6 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
 
   const loading = isLogin ? loginLoading : signupLoading;
 
-  // 🔑 Sync Redux → local UI state
   useEffect(() => {
     setIsLogin(type === "login");
   }, [type]);
