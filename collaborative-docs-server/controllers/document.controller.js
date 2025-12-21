@@ -4,7 +4,10 @@ export const getDocuments = async (req, res) => {
   try {
     const documents = await Document.find({
       $or: [{ owner: req.user.id }, { "sharedWith.user": req.user.id }],
-    }).sort({ createdAt: -1 });
+    })
+      .populate("owner", "username email")
+      .populate("sharedWith.user", "username email")
+      .sort({ createdAt: -1 });
 
     res.json(documents);
   } catch (error) {
@@ -19,14 +22,21 @@ export const getDocumentById = async (req, res) => {
     let document = await Document.findOne({
       _id: id,
       $or: [{ owner: req.user.id }, { "sharedWith.user": req.user.id }],
-    });
+    })
+      .populate("owner", "username email")
+      .populate("sharedWith.user", "username email");
 
     if (!document) {
-      document = await Document.create({
+      const newDoc = await Document.create({
         title: "Untitled Document",
         content: "",
         owner: req.user.id,
       });
+
+      // Populate after creation
+      document = await Document.findById(newDoc._id)
+        .populate("owner", "username email")
+        .populate("sharedWith.user", "username email");
     }
 
     res.status(200).json(document);

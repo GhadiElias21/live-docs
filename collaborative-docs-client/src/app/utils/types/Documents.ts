@@ -23,3 +23,18 @@ export interface Document {
   createdAt: string;
   updatedAt: string;
 }
+export interface DocumentsGridProps {
+  documents: Document[];
+  isCreating?: boolean;
+  onCreate?: () => void;
+  currentUserId: string;
+}
+export interface DocumentCardProps {
+  _id: string;
+  title: string;
+  content: string;
+  updatedAt?: string;
+
+  owner?: DocumentUser | string;
+  currentUserId: string;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useGetDocumentsQuery,
   useCreateDocumentMutation,
@@ -9,52 +9,90 @@ import ErrorState from "../components/ErrorState";
 import EmptyState from "../components/Documents/EmptyState";
 import DocumentsGrid from "../components/Documents/DocumentsGrid";
 import StatsFooter from "../components/Documents/StatsFooter";
-import FloatingSaveButton from "../components/FloatingButton";
 import FullScreenLoader from "../components/FullScreenLoader";
+import { useGetMeQuery } from "@/store/api/authApi";
 
 export default function DocumentsPage() {
-  const { data: documents = [], isLoading, isError } = useGetDocumentsQuery();
+  const { data: auth, isLoading: authLoading } = useGetMeQuery();
+
+  const {
+    data: documents = [],
+    isLoading: docsLoading,
+    isError,
+  } = useGetDocumentsQuery();
+
   const [createDocument, { isLoading: isCreating }] =
     useCreateDocumentMutation();
+
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredDocuments = documents.filter(
-    (doc) =>
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const userId = auth?.user?._id;
+
+  const filtered = useMemo(() => {
+    return documents.filter(
+      (doc) =>
+        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.content.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [documents, searchQuery]);
+  const myDocuments = useMemo(() => {
+    if (!userId) return [];
+    return filtered.filter((doc) => {
+      const ownerId = typeof doc.owner === "string" ? doc.owner : doc.owner._id;
+      return ownerId === userId;
+    });
+  }, [filtered, userId]);
+
+  const sharedDocuments = useMemo(() => {
+    if (!userId) return [];
+    return filtered.filter((doc) => {
+      const ownerId = typeof doc.owner === "string" ? doc.owner : doc.owner._id;
+      return ownerId !== userId;
+    });
+  }, [filtered, userId]);
+
+  if (authLoading || docsLoading) return <FullScreenLoader />;
+  if (isError) return <ErrorState message="Error loading documents" />;
+  if (!userId) return <ErrorState message="Not authenticated" />;
 
   const handleCreateDocument = async () => {
-    try {
-      await createDocument({
-        title: "New Document",
-        content: "Start typing here...",
-      }).unwrap();
-    } catch (err) {
-      console.error(err);
-    }
+    await createDocument({
+      title: "New Document",
+      content: "Start typing here...",
+    }).unwrap();
   };
 
-  if (isLoading) return <FullScreenLoader />;
-  if (isError) return <ErrorState message="Error loading documents" />;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-black text-gray-100 p-4 md:p-6">
-      {documents.length > 0 ? (
-        <>
-          <DocumentsGrid
-            documents={filteredDocuments}
-            isCreating={isCreating}
-            onCreate={handleCreateDocument}
-          />
-          <StatsFooter
-            total={documents.length}
-            shown={filteredDocuments.length}
-          />
-        </>
-      ) : (
-        <EmptyState noDocuments />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-gray-100 p-4 md:p-6 space-y-10">
+      <section>
+        <h2 className="text-xl font-semibold mb-4">My Documents</h2>
+
+        {myDocuments.length ? (
+          <>
+            <DocumentsGrid
+              documents={myDocuments}
+              isCreating={isCreating}
+              currentUserId={userId}
+              onCreate={handleCreateDocument}
+            />
+            <StatsFooter total={documents.length} shown={myDocuments.length} />
+          </>
+        ) : (
+          <EmptyState noDocuments />
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold mb-4">Shared With Me</h2>
+
+        {sharedDocuments.length ? (
+          <DocumentsGrid documents={sharedDocuments} currentUserId={userId} />
+        ) : (
+          <p className="text-gray-400 text-sm">
+            No documents shared with you yet.
+          </p>
+        )}
+      </section>
     </div>
   );
 }
