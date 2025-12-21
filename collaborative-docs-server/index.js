@@ -7,6 +7,8 @@ import { createServer } from "http";
 import dotenv from "dotenv";
 import documentRoute from "./routes/document.route.js";
 import authRoutes from "./routes/auth.route.js";
+import userRoutes from "./routes/user.route.js";
+
 dotenv.config();
 
 const app = express();
@@ -24,6 +26,7 @@ app.use(cookieParser());
 
 app.use("/api/documents", documentRoute);
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 const connectDB = async () => {
   try {
