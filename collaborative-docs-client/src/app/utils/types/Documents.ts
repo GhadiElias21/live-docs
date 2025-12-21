@@ -5,8 +5,9 @@ export interface DocumentUser {
 }
 
 export interface SharedWithUser {
-  user: DocumentUser | string;
-  role: "viewer" | "editor" | "commenter";
+  _id: string; // required
+  user: User;
+  role: "viewer" | "editor";
   sharedAt?: Date;
 }
 
@@ -37,4 +38,30 @@ export interface DocumentCardProps {
 
   owner?: DocumentUser | string;
   currentUserId: string;
+}
+
+interface User {
+  _id: string;
+  username: string;
+  email: string;
+}
+
+interface SharedWith {
+  _id: string;
+  role: "viewer" | "editor";
+  user: User;
+}
+
+export interface DocumentHeaderProps {
+  title?: string;
+  setTitle?: (v: string) => void;
+  isSaving?: boolean;
+  lastSaved?: string;
+  onSave?: () => void;
+  backLink?: string;
+  backLabel?: string;
+  owner?: User;
+  sharedWith?: SharedWith[];
+  loggedInUser?: User;
+  isOwner?: boolean;
 }

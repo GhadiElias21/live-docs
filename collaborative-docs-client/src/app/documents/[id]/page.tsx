@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import {
@@ -13,18 +13,34 @@ import ErrorState from "@/app/components/ErrorState";
 import DocumentEditor from "@/app/components/DocumentEditor";
 import DocumentHeader from "@/app/components/DocumentHeader";
 import DocumentFooter from "@/app/components/DocumentFooter";
+import { useGetMeQuery } from "@/store/api/authApi";
+import { SharedWithUser } from "@/app/utils/types/Documents";
 
 export default function DocumentPage() {
   const { id } = useParams<{ id: string }>();
   const { data: document, isLoading, isError } = useGetDocumentByIdQuery(id);
-
   const [updateDocument] = useUpdateDocumentMutation();
+
+  const { data: meData } = useGetMeQuery(); // logged-in user
+  const loggedInUser = meData?.user;
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState("");
 
+  const isOwner = useMemo(
+    () => document?.owner?.email === loggedInUser?.email,
+    [document, loggedInUser]
+  );
+  const sharedWithUsers = useMemo<SharedWithUser[]>(() => {
+    if (!document?.sharedWith) return [];
+    return document.sharedWith.map((item) => ({
+      _id: item.user._id,
+      user: item.user,
+      role: item.role,
+    }));
+  }, [document]);
   useEffect(() => {
     if (document) {
       setTitle(document.title || "");
@@ -33,7 +49,7 @@ export default function DocumentPage() {
   }, [document]);
 
   const handleSave = async () => {
-    if (!document || isSaving) return; // 👈 HARD GUARD
+    if (!document || isSaving) return;
 
     setIsSaving(true);
 
@@ -81,10 +97,13 @@ export default function DocumentPage() {
         onSave={handleSave}
         backLink="/documents"
         backLabel="← Documents"
+        owner={document.owner}
+        sharedWith={sharedWithUsers}
+        loggedInUser={loggedInUser}
+        isOwner={isOwner}
       />
       <main className="max-w-4xl mx-auto p-4">
         <DocumentEditor content={content} setContent={setContent} />
-
         <DocumentFooter content={content} />
       </main>
     </motion.div>
