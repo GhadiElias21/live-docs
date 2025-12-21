@@ -55,11 +55,6 @@ export default function DocumentsPage() {
       ) : (
         <EmptyState noDocuments />
       )}
-
-      <FloatingSaveButton
-        onClick={handleCreateDocument}
-        isLoading={isCreating}
-      />
     </div>
   );
 }

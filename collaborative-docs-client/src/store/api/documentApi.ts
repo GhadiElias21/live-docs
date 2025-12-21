@@ -1,10 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-export interface Document {
-  _id: string;
-  title: string;
-  content: string;
-}
+import { Document } from "@/app/utils/types/Documents";
 
 export const documentApi = createApi({
   reducerPath: "documentApi",
@@ -67,6 +63,14 @@ export const documentApi = createApi({
         { type: "Document", id: "LIST" },
       ],
     }),
+    shareDocument: builder.mutation({
+      query: ({ documentId, userId, role }) => ({
+        url: "/documents/share",
+        method: "POST",
+        body: { documentId, userId, role },
+      }),
+      invalidatesTags: [{ type: "Document", id: "LIST" }],
+    }),
   }),
 });
 
@@ -76,4 +80,5 @@ export const {
   useCreateDocumentMutation,
   useUpdateDocumentMutation,
   useDeleteDocumentMutation,
+  useShareDocumentMutation,
 } = documentApi;

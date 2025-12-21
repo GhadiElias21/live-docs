@@ -21,8 +21,8 @@ const DocumentSchema = new Schema(
 
     sharedWith: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "Users",
+        user: { type: Schema.Types.ObjectId, ref: "Users" },
+        role: { type: String, enum: ["viewer", "editor"], default: "editor" },
       },
     ],
   },

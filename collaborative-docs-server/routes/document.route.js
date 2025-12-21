@@ -5,6 +5,7 @@ import {
   createDocument,
   updateDocument,
   deleteDocument,
+  shareDocument,
 } from "../controllers/document.controller.js";
 import { authenticateToken } from "../middlewares/auth.js";
 
@@ -15,6 +16,8 @@ router.use(authenticateToken);
 router.get("/", getDocuments);
 
 router.get("/:id", getDocumentById);
+
+router.post("/share", shareDocument);
 
 router.post("/", createDocument);
 
