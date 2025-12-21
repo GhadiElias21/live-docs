@@ -8,13 +8,13 @@ import {
   useUpdateDocumentMutation,
 } from "@/store/api/documentApi";
 import { useAutoSave } from "@/app/utils/hooks/useAutoSave";
-import LoadingState from "@/app/components/LoadingState";
 import ErrorState from "@/app/components/ErrorState";
 import DocumentEditor from "@/app/components/DocumentEditor";
 import DocumentHeader from "@/app/components/DocumentHeader";
 import DocumentFooter from "@/app/components/DocumentFooter";
 import { useGetMeQuery } from "@/store/api/authApi";
 import { SharedWithUser } from "@/app/utils/types/Documents";
+import FullScreenLoader from "@/app/components/FullScreenLoader";
 
 export default function DocumentPage() {
   const { id } = useParams<{ id: string }>();
@@ -80,7 +80,7 @@ export default function DocumentPage() {
     onSave: handleSave,
   });
 
-  if (isLoading) return <LoadingState />;
+  if (isLoading) return <FullScreenLoader />;
   if (isError || !document) return <ErrorState />;
 
   return (
