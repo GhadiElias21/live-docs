@@ -3,13 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import DocumentCard from "./DocumentCard";
 import CreateDocumentCard from "./CreateDocumentCard";
-
-interface Document {
-  _id: string;
-  title: string;
-  content: string;
-  updatedAt?: string;
-}
+import { Document } from "@/app/utils/types/Documents";
 
 interface DocumentsGridProps {
   documents: Document[];

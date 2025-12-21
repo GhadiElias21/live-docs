@@ -14,12 +14,12 @@ export interface Document {
   _id: string;
   title: string;
   content: string;
-  owner: DocumentUser; // Always populated, not string
+  owner: DocumentUser;
   sharedWith: Array<{
-    user: DocumentUser; // Always populated
-    role: "viewer" | "editor" | "commenter";
+    user: DocumentUser;
+    role: "viewer" | "editor";
     sharedAt?: Date;
   }>;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
