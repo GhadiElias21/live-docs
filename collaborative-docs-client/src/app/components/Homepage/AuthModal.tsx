@@ -12,6 +12,8 @@ import {
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { closeAuthModal, openAuthModal } from "@/store/slices/modalSlice";
+import { useLoginMutation, useSignupMutation } from "@/store/api/authApi";
+import { useRouter } from "next/navigation";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -21,12 +23,17 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
   const dispatch = useDispatch();
-
   const [isLogin, setIsLogin] = useState(type === "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [login, { isLoading: loginLoading, error: loginError }] =
+    useLoginMutation();
+
+  const [signup, { isLoading: signupLoading, error: signupError }] =
+    useSignupMutation();
+
+  const loading = isLogin ? loginLoading : signupLoading;
 
   // 🔑 Sync Redux → local UI state
   useEffect(() => {
@@ -35,13 +42,18 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    // TODO: replace with real auth logic / RTK Query
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      if (isLogin) {
+        await login({ email, password }).unwrap();
+      } else {
+        await signup({ username, email, password }).unwrap();
+      }
+
       dispatch(closeAuthModal());
-    }, 1500);
+    } catch (err) {
+      console.error("Auth failed", err);
+    }
   };
 
   const handleSocialLogin = (provider: "google" | "github") => {

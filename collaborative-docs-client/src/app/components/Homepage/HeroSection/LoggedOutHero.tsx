@@ -1,26 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  FaBolt,
-  FaPlay,
-  FaChevronRight,
-  FaCheck,
-  FaCode,
-} from "react-icons/fa";
+import { FaBolt, FaPlay, FaChevronRight, FaCode } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { openAuthModal } from "@/store/slices/modalSlice";
 
-import FeatureCard from "./FeatureCard";
 import { techStack, features } from "@/app/utils/front";
+import FeatureCard from "../FeatureCard";
 
-export default function HeroSection() {
+export default function LoggedOutHero() {
   const dispatch = useDispatch();
 
   return (
     <main className="relative z-10 container mx-auto px-6 py-20">
       <div className="max-w-6xl mx-auto">
-        {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -63,7 +56,6 @@ export default function HeroSection() {
           </div>
         </motion.div>
 
-        {/* Tech Stack */}
         <motion.div className="mb-20">
           <p className="text-center text-gray-400 mb-8">
             Built with cutting-edge technology
@@ -87,7 +79,6 @@ export default function HeroSection() {
           </div>
         </motion.div>
 
-        {/* Features */}
         <motion.div className="mb-20">
           <h2 className="text-4xl font-bold text-center mb-12">
             Everything you need
@@ -102,7 +93,6 @@ export default function HeroSection() {
           </div>
         </motion.div>
 
-        {/* CTA */}
         <motion.div className="relative rounded-3xl p-12 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 mb-6">
             <FaCode className="w-8 h-8 text-black" />

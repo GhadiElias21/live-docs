@@ -9,11 +9,11 @@ interface HeaderProps {
   isSaving?: boolean;
   lastSaved?: string;
   onSave?: () => void;
-  backLink?: string; // Optional back link
-  backLabel?: string; // Optional back button label
-  actionLabel?: string; // Optional action button label
-  actionIcon?: React.ReactNode; // Optional icon for action
-  onAction?: () => void; // Optional action handler
+  backLink?: string;
+  backLabel?: string;
+  actionLabel?: string;
+  actionIcon?: React.ReactNode;
+  onAction?: () => void;
 }
 
 export default function Header({

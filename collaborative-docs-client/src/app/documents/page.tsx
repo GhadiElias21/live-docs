@@ -7,10 +7,10 @@ import {
 } from "@/store/api/documentApi";
 import ErrorState from "../components/ErrorState";
 import EmptyState from "../components/Documents/EmptyState";
-import DocumentHeader from "../components/DocumentHeader";
 import DocumentsGrid from "../components/Documents/DocumentsGrid";
 import StatsFooter from "../components/Documents/StatsFooter";
 import FloatingSaveButton from "../components/FloatingButton";
+import FullScreenLoader from "../components/FullScreenLoader";
 
 export default function DocumentsPage() {
   const { data: documents = [], isLoading, isError } = useGetDocumentsQuery();
@@ -35,7 +35,7 @@ export default function DocumentsPage() {
     }
   };
 
-  if (isLoading) return <EmptyState noDocuments />; // you can replace with a loading component
+  if (isLoading) return <FullScreenLoader />;
   if (isError) return <ErrorState message="Error loading documents" />;
 
   return (

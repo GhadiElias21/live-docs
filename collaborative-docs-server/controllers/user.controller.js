@@ -116,3 +116,13 @@ export const logout = (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out" });
 };
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("username email");
+    if (!user) return res.sendStatus(401);
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};

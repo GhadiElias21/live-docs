@@ -8,7 +8,10 @@ export interface Document {
 
 export const documentApi = createApi({
   reducerPath: "documentApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:5000/api" }),
+  baseQuery: fetchBaseQuery({
+    baseUrl: "/api",
+    credentials: "include",
+  }),
   tagTypes: ["Document"],
   endpoints: (builder) => ({
     getDocuments: builder.query<Document[], void>({
