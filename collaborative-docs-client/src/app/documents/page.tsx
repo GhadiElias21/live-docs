@@ -11,6 +11,7 @@ import DocumentsGrid from "../components/Documents/DocumentsGrid";
 import StatsFooter from "../components/Documents/StatsFooter";
 import FullScreenLoader from "../components/FullScreenLoader";
 import { useGetMeQuery } from "@/store/api/authApi";
+import ShareUsersButton from "../components/User/ShareUsersButton";
 
 export default function DocumentsPage() {
   const { data: auth, isLoading: authLoading } = useGetMeQuery();
@@ -64,6 +65,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-gray-100 p-4 md:p-6 space-y-10">
+      <ShareUsersButton />
       <section>
         <h2 className="text-xl font-semibold mb-4">My Documents</h2>
 
