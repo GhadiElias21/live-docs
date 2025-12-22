@@ -1,10 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { useGetDocumentsQuery } from "@/store/api/documentApi";
-import { useShareDocumentMutation } from "@/store/api/documentApi";
+
+import {
+  useGetDocumentsQuery,
+  useShareDocumentMutation,
+  useUpdateDocumentAccessMutation,
+  useRemoveDocumentAccessMutation,
+} from "@/store/api/documentApi";
+
 import { useGetMeQuery } from "@/store/api/authApi";
+import {
+  backdrop,
+  modal,
+} from "@/app/utils/animations/ShareDocumentsModals/ShareDocumentsModals";
+import { useToast } from "@/app/utils/hooks/useToast";
 
 type Role = "viewer" | "editor";
 
@@ -20,7 +31,15 @@ interface Props {
 export default function ShareDocumentModal({ user, onClose }: Props) {
   const { data: auth } = useGetMeQuery();
   const { data: documents = [] } = useGetDocumentsQuery();
-  const [shareDocument, { isLoading }] = useShareDocumentMutation();
+  const { success, error } = useToast();
+
+  const [shareDocument, { isLoading: isSharing }] = useShareDocumentMutation();
+
+  const [updateAccess, { isLoading: isUpdating }] =
+    useUpdateDocumentAccessMutation();
+
+  const [removeAccess, { isLoading: isRemoving }] =
+    useRemoveDocumentAccessMutation();
 
   const [documentId, setDocumentId] = useState("");
   const [role, setRole] = useState<Role>("viewer");
@@ -47,34 +66,44 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
     );
   }, [documentId, documents, user._id]);
 
-  const alreadyShared = Boolean(existingShare);
+  const isLoading = isSharing || isUpdating || isRemoving;
 
-  const handleShare = async () => {
-    if (!documentId || alreadyShared) return;
+  const handleSubmit = async () => {
+    if (!documentId) return;
 
-    await shareDocument({
-      documentId,
-      userId: user._id,
-      role,
-    }).unwrap();
+    try {
+      if (!existingShare) {
+        await shareDocument({
+          documentId,
+          userId: user._id,
+          role,
+        }).unwrap();
+      } else if (existingShare.role !== role) {
+        await updateAccess({
+          documentId,
+          userId: user._id,
+          role,
+        }).unwrap();
+      }
 
-    onClose();
+      onClose();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const backdrop = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 },
-  };
-
-  const modal: Variants = {
-    hidden: { opacity: 0, scale: 0.9, y: 40 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: { duration: 0.3, ease: "easeOut" },
-    },
-    exit: { opacity: 0, scale: 0.9, y: 40 },
+  const handleRemove = async () => {
+    if (!documentId || !existingShare) return;
+    try {
+      await removeAccess({
+        documentId,
+        userId: user._id,
+      }).unwrap();
+      success("Operation successful!");
+      onClose();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -101,6 +130,7 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
             space-y-5
           "
         >
+          {/* Header */}
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold tracking-wide">
               Share with <span className="text-green-400">{user.username}</span>
@@ -113,6 +143,7 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
             </button>
           </div>
 
+          {/* Document select */}
           <div className="space-y-1">
             <label className="text-xs uppercase tracking-widest text-gray-400">
               Document
@@ -135,14 +166,15 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
             </select>
           </div>
 
+          {/* Role */}
           <div className="space-y-1">
             <label className="text-xs uppercase tracking-widest text-gray-400">
               Role
             </label>
             <select
-              value={role}
+              value={role ?? (existingShare ? existingShare.role : "viewer")}
               onChange={(e) => setRole(e.target.value as Role)}
-              disabled={alreadyShared}
+              disabled={!documentId}
               className="
                 w-full rounded-md bg-black/40 p-2
                 border border-green-500/20
@@ -155,7 +187,7 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
             </select>
           </div>
 
-          {alreadyShared && (
+          {existingShare && (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -167,38 +199,59 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
             >
               Already shared as{" "}
               <span className="font-semibold capitalize">
-                {existingShare?.role}
+                {existingShare.role}
               </span>
             </motion.div>
           )}
 
-          <div className="flex justify-end gap-3 pt-3">
-            <button
-              onClick={onClose}
-              className="
-                px-4 py-1.5 rounded-md text-sm
-                bg-gray-800 hover:bg-gray-700
-                transition
-              "
-            >
-              Cancel
-            </button>
+          <div className="flex justify-between items-center pt-3">
+            {existingShare && (
+              <button
+                onClick={handleRemove}
+                disabled={isLoading}
+                className="
+                  px-3 py-1.5 rounded-md text-sm
+                  text-red-400 border border-red-500/30
+                  hover:bg-red-500/10
+                  transition disabled:opacity-40
+                "
+              >
+                Remove access
+              </button>
+            )}
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShare}
-              disabled={!documentId || alreadyShared || isLoading}
-              className="
-                px-4 py-1.5 rounded-md text-sm font-medium
-                bg-green-500 text-black
-                hover:bg-green-400
-                disabled:opacity-40
-                shadow-[0_0_20px_rgba(34,197,94,0.4)]
-              "
-            >
-              {alreadyShared ? "Already Shared" : "Share"}
-            </motion.button>
+            <div className="flex gap-3 ml-auto">
+              <button
+                onClick={onClose}
+                className="
+                  px-4 py-1.5 rounded-md text-sm
+                  bg-gray-800 hover:bg-gray-700
+                  transition
+                "
+              >
+                Cancel
+              </button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSubmit}
+                disabled={!documentId || isLoading}
+                className="
+                  px-4 py-1.5 rounded-md text-sm font-medium
+                  bg-green-500 text-black
+                  hover:bg-green-400
+                  disabled:opacity-40
+                  shadow-[0_0_20px_rgba(34,197,94,0.4)]
+                "
+              >
+                {!existingShare
+                  ? "Share"
+                  : existingShare.role !== role
+                  ? "Update"
+                  : "Done"}
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       </motion.div>

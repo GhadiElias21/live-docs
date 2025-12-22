@@ -6,6 +6,8 @@ import {
   updateDocument,
   deleteDocument,
   shareDocument,
+  removeDocumentAccess,
+  updateDocumentAccess,
 } from "../controllers/document.controller.js";
 import { authenticateToken } from "../middlewares/auth.js";
 
@@ -24,5 +26,9 @@ router.post("/", createDocument);
 router.put("/:id", updateDocument);
 
 router.delete("/:id", deleteDocument);
+
+router.delete("/:documentId/access/:userId", removeDocumentAccess);
+
+router.put("/:documentId/access/:userId", updateDocumentAccess);
 
 export default router;

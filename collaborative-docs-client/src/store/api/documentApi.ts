@@ -71,6 +71,40 @@ export const documentApi = createApi({
       }),
       invalidatesTags: [{ type: "Document", id: "LIST" }],
     }),
+    removeDocumentAccess: builder.mutation<
+      {
+        message: string;
+        removedUser: { userId: string; role: string };
+      },
+      { documentId: string; userId: string }
+    >({
+      query: ({ documentId, userId }) => ({
+        url: `documents/${documentId}/access/${userId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (result, error, { documentId }) => [
+        { type: "Document", id: documentId },
+        { type: "Document", id: "LIST" },
+      ],
+    }),
+
+    updateDocumentAccess: builder.mutation<
+      {
+        message: string;
+        update: { userId: string; oldRole: string; newRole: string };
+      },
+      { documentId: string; userId: string; role: "viewer" | "editor" }
+    >({
+      query: ({ documentId, userId, role }) => ({
+        url: `documents/${documentId}/access/${userId}`,
+        method: "PUT",
+        body: { role },
+      }),
+      invalidatesTags: (result, error, { documentId }) => [
+        { type: "Document", id: documentId },
+        { type: "Document", id: "LIST" },
+      ],
+    }),
   }),
 });
 
@@ -81,4 +115,6 @@ export const {
   useUpdateDocumentMutation,
   useDeleteDocumentMutation,
   useShareDocumentMutation,
+  useRemoveDocumentAccessMutation,
+  useUpdateDocumentAccessMutation,
 } = documentApi;

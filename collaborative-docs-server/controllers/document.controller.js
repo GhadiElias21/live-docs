@@ -139,3 +139,123 @@ export const shareDocument = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const removeDocumentAccess = async (req, res) => {
+  try {
+    // Get parameters from URL instead of body
+    const { documentId, userId } = req.params;
+
+    // Validate required parameters
+    if (!documentId || !userId) {
+      return res.status(400).json({
+        message: "Document ID and User ID are required",
+      });
+    }
+
+    const document = await Document.findOne({
+      _id: documentId,
+      owner: req.user.id,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        message: "Document not found or you don't have permission",
+      });
+    }
+
+    const existingShareIndex = document.sharedWith.findIndex(
+      (entry) => entry.user.toString() === userId
+    );
+
+    if (existingShareIndex === -1) {
+      return res.status(404).json({
+        message: "User doesn't have access to this document",
+      });
+    }
+
+    const removedUser = document.sharedWith[existingShareIndex];
+    document.sharedWith.splice(existingShareIndex, 1);
+
+    await document.save();
+
+    return res.status(200).json({
+      message: "Access removed successfully",
+      removedUser: {
+        userId: removedUser.user,
+        role: removedUser.role,
+      },
+      document: {
+        _id: document._id,
+        title: document.title,
+        sharedWith: document.sharedWith,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateDocumentAccess = async (req, res) => {
+  try {
+    // Get documentId and userId from URL parameters
+    const { documentId, userId } = req.params;
+    const { role } = req.body;
+
+    if (!role) {
+      return res.status(400).json({
+        message: "Role is required in request body",
+      });
+    }
+
+    const validRoles = ["viewer", "editor"];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Invalid role. Must be 'viewer' or 'editor'",
+      });
+    }
+
+    const document = await Document.findOne({
+      _id: documentId,
+      owner: req.user.id,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        message: "Document not found or you don't have permission",
+      });
+    }
+
+    const existingShareIndex = document.sharedWith.findIndex(
+      (entry) => entry.user.toString() === userId
+    );
+
+    if (existingShareIndex === -1) {
+      return res.status(404).json({
+        message: "User doesn't have access to this document. Share it first.",
+      });
+    }
+
+    const oldRole = document.sharedWith[existingShareIndex].role;
+
+    if (document.sharedWith[existingShareIndex].role !== role) {
+      document.sharedWith[existingShareIndex].role = role;
+      await document.save();
+    }
+
+    return res.status(200).json({
+      message: "Access updated successfully",
+      update: {
+        userId,
+        oldRole,
+        newRole: role,
+      },
+      document: {
+        _id: document._id,
+        title: document.title,
+        sharedWith: document.sharedWith,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
