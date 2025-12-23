@@ -3,6 +3,7 @@ import { documentApi } from "./api/documentApi";
 import modalReducer from "./slices/modalSlice";
 import { authApi } from "./api/authApi";
 import { usersApi } from "./api/userApi";
+import onlineUsersReducer from "./slices/onlineUsersSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     [usersApi.reducerPath]: usersApi.reducer,
 
     modal: modalReducer,
+    onlineUsers: onlineUsersReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(

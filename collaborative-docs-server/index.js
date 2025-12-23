@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import { Server } from "socket.io";
+import { initSocket } from "./socket/index.js";
 
 import { createServer } from "http";
 import dotenv from "dotenv";
@@ -13,6 +15,13 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  },
+});
+initSocket(io);
 
 app.use(
   cors({

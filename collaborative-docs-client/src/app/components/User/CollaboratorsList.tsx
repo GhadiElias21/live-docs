@@ -3,12 +3,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { FaChevronDown, FaUserShield, FaUserEdit } from "react-icons/fa";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 interface CollaboratorsListProps {
-  owner: { username: string; email: string };
+  owner: { _id: string; username: string; email: string };
   sharedWith: {
     _id: string;
-    user: { username: string; email: string };
+    user: { _id: string; username: string; email: string };
     role: string;
   }[];
   loggedInUser?: { email: string };
@@ -20,6 +22,10 @@ export default function CollaboratorsList({
   loggedInUser,
 }: CollaboratorsListProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const onlineUsers = useSelector((state: RootState) => state.onlineUsers.ids);
+
+  const isOwnerOnline =
+    onlineUsers.includes(owner._id) && owner.email !== loggedInUser?.email;
 
   return (
     <div className="relative">
@@ -28,17 +34,31 @@ export default function CollaboratorsList({
         className="flex items-center gap-2 p-1 bg-zinc-900/40 hover:bg-zinc-800 border border-zinc-700/50 rounded-full transition-all"
       >
         <div className="flex -space-x-2 ml-1">
-          <div className="w-7 h-7 rounded-full bg-emerald-600 border-2 border-zinc-900 flex items-center justify-center text-[10px] font-bold text-white uppercase">
-            {owner.username.charAt(0)}
-          </div>
-          {sharedWith.slice(0, 2).map((s) => (
-            <div
-              key={s._id}
-              className="w-7 h-7 rounded-full bg-zinc-700 border-2 border-zinc-900 flex items-center justify-center text-[10px] font-bold text-zinc-300 uppercase"
-            >
-              {s.user.username.charAt(0)}
+          <div className="relative w-7 h-7">
+            <div className="w-7 h-7 rounded-full bg-emerald-600 border-2 border-zinc-900 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+              {owner.username.charAt(0)}
             </div>
-          ))}
+            {isOwnerOnline && (
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-zinc-900 rounded-full" />
+            )}
+          </div>
+
+          {sharedWith.slice(0, 2).map((s) => {
+            const isOnline =
+              onlineUsers.includes(s._id) &&
+              s.user.email !== loggedInUser?.email;
+            return (
+              <div key={s._id} className="relative w-7 h-7">
+                <div className="w-7 h-7 rounded-full bg-zinc-700 border-2 border-zinc-900 flex items-center justify-center text-[10px] font-bold text-zinc-300 uppercase">
+                  {s.user.username.charAt(0)}
+                </div>
+                {isOnline && (
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-zinc-900 rounded-full" />
+                )}
+              </div>
+            );
+          })}
+
           {sharedWith.length > 2 && (
             <div className="w-7 h-7 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-[10px] font-bold text-zinc-500">
               +{sharedWith.length - 2}
@@ -73,8 +93,13 @@ export default function CollaboratorsList({
 
               <div className="max-h-60 overflow-y-auto">
                 <div className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white uppercase">
-                    {owner.username.charAt(0)}
+                  <div className="relative w-8 h-8">
+                    <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white uppercase">
+                      {owner.username.charAt(0)}
+                    </div>
+                    {isOwnerOnline && (
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-zinc-900 rounded-full" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-zinc-100 truncate">
@@ -87,25 +112,35 @@ export default function CollaboratorsList({
                   </div>
                 </div>
 
-                {sharedWith.map((s) => (
-                  <div
-                    key={s._id}
-                    className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-t border-zinc-800/50"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400 uppercase">
-                      {s.user.username.charAt(0)}
+                {sharedWith.map((s) => {
+                  const isOnline =
+                    onlineUsers.includes(s._id) &&
+                    s.user.email !== loggedInUser?.email;
+                  return (
+                    <div
+                      key={s._id}
+                      className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-t border-zinc-800/50"
+                    >
+                      <div className="relative w-8 h-8">
+                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400 uppercase">
+                          {s.user.username.charAt(0)}
+                        </div>
+                        {isOnline && (
+                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-zinc-900 rounded-full" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-zinc-200 truncate">
+                          {s.user.username}{" "}
+                          {loggedInUser?.email === s.user.email && "(You)"}
+                        </p>
+                        <p className="text-[10px] text-zinc-500 font-medium flex items-center gap-1 uppercase">
+                          <FaUserEdit size={10} /> {s.role}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-200 truncate">
-                        {s.user.username}{" "}
-                        {loggedInUser?.email === s.user.email && "(You)"}
-                      </p>
-                      <p className="text-[10px] text-zinc-500 font-medium flex items-center gap-1 uppercase">
-                        <FaUserEdit size={10} /> {s.role}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           </>
