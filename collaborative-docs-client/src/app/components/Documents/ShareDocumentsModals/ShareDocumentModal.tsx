@@ -1,7 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FaChevronDown,
+  FaCheck,
+  FaFileAlt,
+  FaUserShield,
+} from "react-icons/fa";
 
 import {
   useGetDocumentsQuery,
@@ -33,15 +39,15 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
   const { data: documents = [] } = useGetDocumentsQuery();
 
   const [shareDocument, { isLoading: isSharing }] = useShareDocumentMutation();
-
   const [updateAccess, { isLoading: isUpdating }] =
     useUpdateDocumentAccessMutation();
-
   const [removeAccess, { isLoading: isRemoving }] =
     useRemoveDocumentAccessMutation();
 
   const [documentId, setDocumentId] = useState("");
   const [role, setRole] = useState<Role>("viewer");
+  const [isDocOpen, setIsDocOpen] = useState(false);
+  const [isRoleOpen, setIsRoleOpen] = useState(false);
 
   const currentUserId = auth?.user?._id;
 
@@ -52,6 +58,8 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
       return ownerId === currentUserId;
     });
   }, [documents, currentUserId]);
+
+  const selectedDoc = myDocuments.find((d) => d._id === documentId);
 
   const existingShare = useMemo(() => {
     if (!documentId) return null;
@@ -86,6 +94,7 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
         role,
       }).unwrap();
     } else {
+      onClose();
       return;
     }
     try {
@@ -96,26 +105,22 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
           : "Access updated successfully",
         error: (err) => err?.data?.message || "Something went wrong",
       });
-
       onClose();
     } catch (err) {}
   };
 
   const handleRemove = async () => {
     if (!documentId || !existingShare) return;
-
     const promise = removeAccess({
       documentId,
       userId: user._id,
     }).unwrap();
-
     try {
       await toastPromise(promise, {
         loading: "Removing access...",
         success: "Access removed successfully",
         error: (err) => err?.data?.message || "Something went wrong",
       });
-
       onClose();
     } catch {}
   };
@@ -123,7 +128,7 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
         variants={backdrop}
         initial="hidden"
         animate="visible"
@@ -136,136 +141,186 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
           animate="visible"
           exit="exit"
           onClick={(e) => e.stopPropagation()}
-          className="
-            w-full max-w-md rounded-2xl p-6
-            bg-gradient-to-br from-[#0b0f0e] to-[#050707]
-            border border-green-500/20
-            shadow-[0_0_40px_rgba(34,197,94,0.15)]
-            space-y-5
-          "
+          className="w-full max-w-md rounded-3xl p-8 bg-zinc-950 border border-zinc-800 shadow-2xl space-y-6"
         >
-          {/* Header */}
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold tracking-wide">
-              Share with <span className="text-green-400">{user.username}</span>
-            </h2>
+            <div>
+              <h2 className="text-xl font-bold text-white">Share Document</h2>
+              <p className="text-sm text-zinc-500">
+                Sharing with{" "}
+                <span className="text-emerald-400 font-medium">
+                  {user.username}
+                </span>
+              </p>
+            </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-green-400 transition"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-900 text-zinc-400 hover:text-white transition"
             >
               ✕
             </button>
           </div>
 
-          {/* Document select */}
-          <div className="space-y-1">
-            <label className="text-xs uppercase tracking-widest text-gray-400">
-              Document
-            </label>
-            <select
-              value={documentId}
-              onChange={(e) => setDocumentId(e.target.value)}
-              className="
-                w-full rounded-md bg-black/40 p-2
-                border border-green-500/20
-                focus:outline-none focus:ring-2 focus:ring-green-500/40
-              "
-            >
-              <option value="">Select your document</option>
-              {myDocuments.map((doc) => (
-                <option key={doc._id} value={doc._id}>
-                  {doc.title}
-                </option>
-              ))}
-            </select>
-          </div>
+          <div className="space-y-4">
+            <div className="space-y-2 relative">
+              <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 ml-1">
+                Select Document
+              </label>
+              <button
+                onClick={() => setIsDocOpen(!isDocOpen)}
+                className="w-full flex items-center justify-between bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-zinc-200 hover:border-emerald-500/50 transition-all shadow-inner"
+              >
+                <div className="flex items-center gap-3">
+                  <FaFileAlt
+                    className={
+                      documentId ? "text-emerald-500" : "text-zinc-600"
+                    }
+                  />
+                  <span
+                    className={documentId ? "text-zinc-100" : "text-zinc-500"}
+                  >
+                    {selectedDoc?.title || "Choose a document..."}
+                  </span>
+                </div>
+                <FaChevronDown
+                  className={`text-xs text-zinc-500 transition-transform ${
+                    isDocOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-          {/* Role */}
-          <div className="space-y-1">
-            <label className="text-xs uppercase tracking-widest text-gray-400">
-              Role
-            </label>
-            <select
-              value={role ?? (existingShare ? existingShare.role : "viewer")}
-              onChange={(e) => setRole(e.target.value as Role)}
-              disabled={!documentId}
-              className="
-                w-full rounded-md bg-black/40 p-2
-                border border-green-500/20
-                focus:outline-none focus:ring-2 focus:ring-green-500/40
-                disabled:opacity-40
-              "
-            >
-              <option value="viewer">Viewer (read only)</option>
-              <option value="editor">Editor (can edit)</option>
-            </select>
+              <AnimatePresence>
+                {isDocOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl z-10 overflow-hidden max-h-48 overflow-y-auto"
+                  >
+                    {myDocuments.map((doc) => (
+                      <button
+                        key={doc._id}
+                        onClick={() => {
+                          setDocumentId(doc._id);
+                          setIsDocOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between p-4 hover:bg-emerald-500/10 text-left transition-colors group"
+                      >
+                        <span className="text-sm text-zinc-300 group-hover:text-emerald-400">
+                          {doc.title}
+                        </span>
+                        {documentId === doc._id && (
+                          <FaCheck className="text-emerald-500 text-xs" />
+                        )}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="space-y-2 relative">
+              <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 ml-1">
+                Access Role
+              </label>
+              <button
+                disabled={!documentId}
+                onClick={() => setIsRoleOpen(!isRoleOpen)}
+                className="w-full flex items-center justify-between bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-emerald-500/50 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <FaUserShield className="text-emerald-500" />
+                  <span className="capitalize">{role}</span>
+                </div>
+                <FaChevronDown
+                  className={`text-xs text-zinc-500 transition-transform ${
+                    isRoleOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              <AnimatePresence>
+                {isRoleOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl z-10 overflow-hidden"
+                  >
+                    {[
+                      {
+                        id: "viewer",
+                        label: "Viewer",
+                        desc: "Can only read the document",
+                      },
+                      {
+                        id: "editor",
+                        label: "Editor",
+                        desc: "Full editing privileges",
+                      },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => {
+                          setRole(opt.id as Role);
+                          setIsRoleOpen(false);
+                        }}
+                        className="w-full flex flex-col p-4 hover:bg-emerald-500/10 text-left transition-colors group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-zinc-200 group-hover:text-emerald-400">
+                            {opt.label}
+                          </span>
+                          {role === opt.id && (
+                            <FaCheck className="text-emerald-500 text-xs" />
+                          )}
+                        </div>
+                        <span className="text-[10px] text-zinc-500">
+                          {opt.desc}
+                        </span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {existingShare && (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="
-                text-sm rounded-md p-2
-                bg-green-500/10 text-green-400
-                border border-green-500/20
-              "
-            >
-              Already shared as{" "}
-              <span className="font-semibold capitalize">
-                {existingShare.role}
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-emerald-500 text-xs">
+              <FaCheck size={10} />
+              <span>
+                User already has <strong>{existingShare.role}</strong> access
               </span>
-            </motion.div>
+            </div>
           )}
 
-          <div className="flex justify-between items-center pt-3">
+          <div className="flex items-center gap-3 pt-2">
             {existingShare && (
               <button
                 onClick={handleRemove}
                 disabled={isLoading}
-                className="
-                  px-3 py-1.5 rounded-md text-sm
-                  text-red-400 border border-red-500/30
-                  hover:bg-red-500/10
-                  transition disabled:opacity-40
-                "
+                className="flex-1 px-4 py-4 rounded-2xl text-xs font-bold text-red-400 bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition disabled:opacity-40"
               >
-                Remove access
+                Remove Access
               </button>
             )}
 
-            <div className="flex gap-3 ml-auto">
-              <button
-                onClick={onClose}
-                className="
-                  px-4 py-1.5 rounded-md text-sm
-                  bg-gray-800 hover:bg-gray-700
-                  transition
-                "
-              >
-                Cancel
-              </button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSubmit}
-                disabled={!documentId || isLoading}
-                className="
-                  px-4 py-1.5 rounded-md text-sm font-medium
-                  bg-green-500 text-black
-                  hover:bg-green-400
-                  disabled:opacity-40
-                  shadow-[0_0_20px_rgba(34,197,94,0.4)]
-                "
-              >
-                {!existingShare
-                  ? "Share"
-                  : existingShare.role !== role
-                  ? "Update"
-                  : "Done"}
-              </motion.button>
-            </div>
+            <motion.button
+              whileHover={!(!documentId || isLoading) ? { scale: 1.02 } : {}}
+              whileTap={!(!documentId || isLoading) ? { scale: 0.98 } : {}}
+              onClick={handleSubmit}
+              disabled={!documentId || isLoading}
+              className="flex-[2] py-4 rounded-2xl text-sm font-bold bg-emerald-500 text-zinc-950 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-600 transition-all shadow-lg shadow-emerald-500/10"
+            >
+              {isLoading
+                ? "Processing..."
+                : !existingShare
+                ? "Send Invitation"
+                : existingShare.role !== role
+                ? "Update Access"
+                : "Keep Access"}
+            </motion.button>
           </div>
         </motion.div>
       </motion.div>

@@ -47,10 +47,10 @@ export default function ShareUsersButton() {
         "
       >
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          className="absolute cursor-pointer inset-0 bg-gradient-to-r from-emerald-400 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           initial={false}
         />
-        <span className="relative flex items-center gap-2">
+        <span className="relative flex items-center  gap-2">
           <FiShare2 className="w-4 h-4" />
           Share Document
         </span>
