@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useParams } from "next/navigation";
+import { useSocket } from "@/socket/SocketProvider";
+import { useDocumentSocket } from "@/app/utils/hooks/useDocumentSocket"; // Import the new hook
 import {
   useGetDocumentByIdQuery,
   useUpdateDocumentMutation,
@@ -18,10 +20,10 @@ import FullScreenLoader from "@/app/components/FullScreenLoader";
 
 export default function DocumentPage() {
   const { id } = useParams<{ id: string }>();
+  const { socket, isConnected } = useSocket();
   const { data: document, isLoading, isError } = useGetDocumentByIdQuery(id);
   const [updateDocument] = useUpdateDocumentMutation();
-
-  const { data: meData } = useGetMeQuery(); // logged-in user
+  const { data: meData } = useGetMeQuery();
   const loggedInUser = meData?.user;
 
   const [title, setTitle] = useState("");
@@ -29,10 +31,24 @@ export default function DocumentPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState("");
 
+  const { typingUsers, emitChange } = useDocumentSocket({
+    socket,
+    isConnected,
+    documentId: id,
+    user: loggedInUser,
+    onContentUpdate: (newContent) => setContent(newContent),
+  });
+
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+    emitChange(newContent);
+  };
+
   const isOwner = useMemo(
     () => document?.owner?.email === loggedInUser?.email,
     [document, loggedInUser]
   );
+
   const sharedWithUsers = useMemo<SharedWithUser[]>(() => {
     if (!document?.sharedWith) return [];
     return document.sharedWith.map((item) => ({
@@ -41,24 +57,24 @@ export default function DocumentPage() {
       role: item.role,
     }));
   }, [document]);
+
   useEffect(() => {
     if (document) {
       setTitle(document.title || "");
-      setContent(document.content || "");
+      if (!content) {
+        setContent(document.content || "");
+      }
     }
   }, [document]);
 
   const handleSave = async () => {
     if (!document || isSaving) return;
-
     setIsSaving(true);
-
     try {
       await updateDocument({
         id: document._id,
         data: { title, content },
       }).unwrap();
-
       setLastSaved(
         new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -102,8 +118,27 @@ export default function DocumentPage() {
         loggedInUser={loggedInUser}
         isOwner={isOwner}
       />
-      <main className="max-w-4xl mx-auto p-4">
-        <DocumentEditor content={content} setContent={setContent} />
+      <main className="max-w-4xl mx-auto p-4 relative">
+        <div className="h-6 mb-2 text-sm text-gray-400 italic flex items-center gap-2">
+          <AnimatePresence>
+            {typingUsers.size > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 5 }}
+                className="flex items-center gap-2"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                {Array.from(typingUsers).join(", ")} is typing...
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <DocumentEditor content={content} setContent={handleContentChange} />
         <DocumentFooter content={content} />
       </main>
     </motion.div>

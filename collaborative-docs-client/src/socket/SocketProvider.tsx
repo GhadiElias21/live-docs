@@ -1,47 +1,63 @@
 "use client";
 
-import { useEffect } from "react";
-import { getSocket } from "./client";
-import { useDispatch } from "react-redux";
 import {
-  removeOnlineUser,
-  setOnlineUsers,
-} from "@/store/slices/onlineUsersSlice";
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+} from "react";
+import { io, Socket } from "socket.io-client";
+import { useDispatch } from "react-redux";
+import { setOnlineUsers } from "@/store/slices/onlineUsersSlice";
 import { useGetMeQuery } from "@/store/api/authApi";
 
-export default function SocketProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { data, isSuccess } = useGetMeQuery();
-  const user = data?.user;
+interface SocketContextType {
+  socket: Socket | null;
+  isConnected: boolean;
+}
 
+const SocketContext = createContext<SocketContextType>({
+  socket: null,
+  isConnected: false,
+});
+
+export const useSocket = () => useContext(SocketContext);
+
+export default function SocketProvider({ children }: { children: ReactNode }) {
+  const socketRef = useRef<Socket | null>(null);
+  const [socketState, setSocketState] = useState<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  const { data: meData } = useGetMeQuery();
+  const user = meData?.user;
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!isSuccess || !user?._id) return;
+    if (!user?._id) return;
 
-    const socket = getSocket(user._id);
-
-    socket.on("connect", () => {
-      console.log("🟢 Socket connected");
+    const socketInstance = io("http://localhost:5000", {
+      auth: { userId: user._id },
     });
 
-    socket.on("userOnline", (onlineUsers: string[]) => {
-      dispatch(setOnlineUsers(onlineUsers));
-      console.log("Online users updated:", onlineUsers);
-    });
+    socketRef.current = socketInstance;
+    setTimeout(() => setSocketState(socketInstance), 0);
 
-    socket.on("userOffline", (userId: string) => {
-      dispatch(removeOnlineUser(userId));
-      console.log("User went offline:", userId);
+    socketInstance.on("connect", () => setIsConnected(true));
+    socketInstance.on("disconnect", () => setIsConnected(false));
+    socketInstance.on("userOnline", (users: string[]) => {
+      dispatch(setOnlineUsers(users));
     });
 
     return () => {
-      socket.disconnect();
+      socketInstance.disconnect();
     };
-  }, [isSuccess, user?._id, dispatch]);
+  }, [user?._id, dispatch]);
 
-  return <>{children}</>;
+  return (
+    <SocketContext.Provider value={{ socket: socketState, isConnected }}>
+      {children}
+    </SocketContext.Provider>
+  );
 }

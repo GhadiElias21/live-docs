@@ -1,7 +1,11 @@
 import { toast, ToastOptions } from "react-hot-toast";
 
 type ToastType = "success" | "error" | "loading";
-
+interface ApiError {
+  data?: {
+    message?: string;
+  };
+}
 const ToastContent = ({
   message,
   type,
@@ -44,7 +48,7 @@ export const toastPromise = async <T,>(
   messages: {
     loading: string;
     success: string | ((data: T) => string);
-    error: string | ((err) => string);
+    error: string | ((err: ApiError) => string);
   }
 ): Promise<T> => {
   const id = toast.custom(
@@ -85,7 +89,7 @@ export const toastPromise = async <T,>(
           type="error"
           message={
             typeof messages.error === "function"
-              ? messages.error(err)
+              ? messages.error(err as ApiError)
               : messages.error
           }
         />
