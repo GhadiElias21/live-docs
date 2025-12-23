@@ -37,7 +37,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?._id) return;
 
-    const socketInstance = io("http://localhost:5000", {
+    const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
       auth: { userId: user._id },
     });
 

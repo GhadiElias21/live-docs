@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export const getSocket = (userId: string) => {
   if (!socket) {
-    socket = io(process.env.NEXT_PUBLIC_API_URL! || "http://localhost:5000", {
+    socket = io(process.env.NEXT_PUBLIC_API_URL!, {
       withCredentials: true,
       auth: {
         userId,
