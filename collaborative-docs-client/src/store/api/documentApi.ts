@@ -69,7 +69,10 @@ export const documentApi = createApi({
         method: "POST",
         body: { documentId, userId, role },
       }),
-      invalidatesTags: [{ type: "Document", id: "LIST" }],
+      invalidatesTags: (result, error, { documentId }) => [
+        { type: "Document", id: documentId },
+        { type: "Document", id: "LIST" },
+      ],
     }),
     removeDocumentAccess: builder.mutation<
       {

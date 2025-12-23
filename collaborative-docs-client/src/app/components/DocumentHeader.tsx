@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { DocumentHeaderProps } from "../utils/types/Documents";
+import CollaboratorsList from "./User/CollaboratorsList";
 
 export default function DocumentHeader({
   title,
@@ -15,84 +16,73 @@ export default function DocumentHeader({
   owner,
   sharedWith = [],
   loggedInUser,
-  isOwner,
 }: DocumentHeaderProps) {
   return (
-    <header className="bg-gray-800/50 backdrop-blur-lg border-b border-gray-700/50 p-4 sticky top-0 z-10">
-      <div className="flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center gap-4 flex-1">
-          {/* Back Button */}
+    <header className="bg-[#09090b]/80 backdrop-blur-xl border-b border-zinc-800 p-3 sticky top-0 z-50">
+      <div className="flex items-center justify-between max-w-7xl mx-auto gap-4">
+        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
           {backLink && (
             <Link href={backLink}>
               <motion.button
-                whileHover={{ x: -5, scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg"
+                whileHover={{ x: -2 }}
+                className="p-2 text-zinc-400 cursor-pointer hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
               >
-                {backLabel || "← Back"}
+                <span className="hidden md:inline">{backLabel || "Back"}</span>
+                <span className="md:hidden">←</span>
               </motion.button>
             </Link>
           )}
 
-          {/* Title Input */}
           {title !== undefined && setTitle && (
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Untitled"
-              className="w-full text-2xl font-bold bg-transparent border-none outline-none text-white"
+              placeholder="Untitled Document"
+              className="w-full text-lg md:text-xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-700 truncate"
             />
           )}
         </div>
 
-        {/* Owner & Shared Users */}
-        <div className="flex items-center gap-3 mr-4">
+        <div className="flex items-center gap-3 md:gap-6 shrink-0">
           {owner && (
-            <span
-              className={`px-2 py-1 rounded-lg text-sm font-medium ${
-                isOwner ? "bg-green-600" : "bg-gray-700"
-              }`}
-            >
-              Owner: {owner.username}
-              {loggedInUser?.email === owner.email && " (You)"}
-            </span>
+            <CollaboratorsList
+              owner={owner}
+              sharedWith={sharedWith}
+              loggedInUser={loggedInUser}
+            />
           )}
-          {sharedWith.map((s) => (
-            <span
-              key={s._id}
-              className="px-2 py-1 rounded-lg text-sm font-medium bg-gray-600"
-            >
-              {s.user.username} ({s.role})
-            </span>
-          ))}
-        </div>
 
-        {/* Right Actions */}
-        {onSave && (
           <div className="flex items-center gap-3">
-            {lastSaved && (
-              <span className="hidden md:block text-sm text-gray-400">
-                Saved at {lastSaved}
+            {lastSaved && !isSaving && (
+              <span className="hidden lg:block text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                Saved {lastSaved}
               </span>
             )}
 
             {onSave && (
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={onSave}
                 disabled={isSaving}
-                className={`px-5 py-2 rounded-lg font-medium ${
+                className={`px-4 py-1.5 rounded-full cursor-pointer text-sm font-semibold transition-all ${
                   isSaving
-                    ? "bg-emerald-600/50"
-                    : "bg-emerald-500 hover:bg-emerald-600"
+                    ? "bg-emerald-500/20 text-emerald-500 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20"
                 }`}
               >
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                    <span>Saving</span>
+                  </div>
+                ) : (
+                  "Save"
+                )}
               </motion.button>
             )}
           </div>
-        )}
+        </div>
       </div>
     </header>
   );
