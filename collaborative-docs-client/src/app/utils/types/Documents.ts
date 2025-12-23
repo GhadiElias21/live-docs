@@ -26,6 +26,7 @@ export interface Document {
 }
 export interface DocumentsGridProps {
   documents: Document[];
+  searchQuery?: string;
   isCreating?: boolean;
   onCreate?: () => void;
   currentUserId: string;
@@ -35,7 +36,7 @@ export interface DocumentCardProps {
   title: string;
   content: string;
   updatedAt?: string;
-
+  searchQuery?: string;
   owner?: DocumentUser | string;
   currentUserId: string;
 }

@@ -3,7 +3,7 @@ import React from "react";
 
 interface CustomToastProps {
   message: string;
-  type: "success" | "error";
+  type: "success" | "error" | "promise";
 }
 
 const CustomToast: React.FC<CustomToastProps> = ({ message, type }) => {

@@ -142,10 +142,8 @@ export const shareDocument = async (req, res) => {
 
 export const removeDocumentAccess = async (req, res) => {
   try {
-    // Get parameters from URL instead of body
     const { documentId, userId } = req.params;
 
-    // Validate required parameters
     if (!documentId || !userId) {
       return res.status(400).json({
         message: "Document ID and User ID are required",

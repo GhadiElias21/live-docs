@@ -6,6 +6,7 @@ import CreateDocumentCard from "./CreateDocumentCard";
 import { DocumentsGridProps } from "@/app/utils/types/Documents";
 
 export default function DocumentsGrid({
+  searchQuery,
   documents,
   isCreating,
   onCreate,
@@ -42,7 +43,11 @@ export default function DocumentsGrid({
             exit="hidden"
             variants={itemVariants}
           >
-            <DocumentCard {...doc} currentUserId={currentUserId} />
+            <DocumentCard
+              searchQuery={searchQuery}
+              {...doc}
+              currentUserId={currentUserId}
+            />
           </motion.div>
         ))}
       </AnimatePresence>

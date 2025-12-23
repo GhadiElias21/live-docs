@@ -15,7 +15,7 @@ import {
   backdrop,
   modal,
 } from "@/app/utils/animations/ShareDocumentsModals/ShareDocumentsModals";
-import { useToast } from "@/app/utils/hooks/useToast";
+import { toastPromise } from "@/app/utils/toast";
 
 type Role = "viewer" | "editor";
 
@@ -31,7 +31,6 @@ interface Props {
 export default function ShareDocumentModal({ user, onClose }: Props) {
   const { data: auth } = useGetMeQuery();
   const { data: documents = [] } = useGetDocumentsQuery();
-  const { success, error } = useToast();
 
   const [shareDocument, { isLoading: isSharing }] = useShareDocumentMutation();
 
@@ -71,39 +70,54 @@ export default function ShareDocumentModal({ user, onClose }: Props) {
   const handleSubmit = async () => {
     if (!documentId) return;
 
+    let promise;
+    const isNewShare = !existingShare;
+
+    if (!existingShare) {
+      promise = shareDocument({
+        documentId,
+        userId: user._id,
+        role,
+      }).unwrap();
+    } else if (existingShare.role !== role) {
+      promise = updateAccess({
+        documentId,
+        userId: user._id,
+        role,
+      }).unwrap();
+    } else {
+      return;
+    }
     try {
-      if (!existingShare) {
-        await shareDocument({
-          documentId,
-          userId: user._id,
-          role,
-        }).unwrap();
-      } else if (existingShare.role !== role) {
-        await updateAccess({
-          documentId,
-          userId: user._id,
-          role,
-        }).unwrap();
-      }
+      await toastPromise(promise, {
+        loading: isNewShare ? "Sharing document..." : "Updating access...",
+        success: isNewShare
+          ? "Document shared successfully"
+          : "Access updated successfully",
+        error: (err) => err?.data?.message || "Something went wrong",
+      });
 
       onClose();
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (err) {}
   };
 
   const handleRemove = async () => {
     if (!documentId || !existingShare) return;
+
+    const promise = removeAccess({
+      documentId,
+      userId: user._id,
+    }).unwrap();
+
     try {
-      await removeAccess({
-        documentId,
-        userId: user._id,
-      }).unwrap();
-      success("Operation successful!");
+      await toastPromise(promise, {
+        loading: "Removing access...",
+        success: "Access removed successfully",
+        error: (err) => err?.data?.message || "Something went wrong",
+      });
+
       onClose();
-    } catch (error) {
-      console.error(error);
-    }
+    } catch {}
   };
 
   return (

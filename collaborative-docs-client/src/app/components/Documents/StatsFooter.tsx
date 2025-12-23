@@ -2,10 +2,9 @@
 
 interface StatsFooterProps {
   total: number;
-  shown: number;
 }
 
-export default function StatsFooter({ total, shown }: StatsFooterProps) {
+export default function StatsFooter({ total }: StatsFooterProps) {
   return (
     <div className="mt-12 pt-6 border-t border-gray-800/50">
       <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-500">
@@ -43,9 +42,7 @@ export default function StatsFooter({ total, shown }: StatsFooterProps) {
             <span>Cloud synced</span>
           </div>
         </div>
-        <div className="text-gray-400">
-          Total: {total} documents • {shown} shown
-        </div>
+        <div className="text-gray-400">Total: {total} documents</div>
       </div>
     </div>
   );

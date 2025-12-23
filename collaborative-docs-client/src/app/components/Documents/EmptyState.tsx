@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import CreateDocumentCard from "./CreateDocumentCard";
 
 interface EmptyStateProps {
   searchQuery?: string;
