@@ -10,7 +10,10 @@ import {
 } from "react";
 import { io, Socket } from "socket.io-client";
 import { useDispatch } from "react-redux";
-import { setOnlineUsers } from "@/store/slices/onlineUsersSlice";
+import {
+  removeOnlineUser,
+  setOnlineUsers,
+} from "@/store/slices/onlineUsersSlice";
 import { useGetMeQuery } from "@/store/api/authApi";
 
 interface SocketContextType {
@@ -45,7 +48,10 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setSocketState(socketInstance), 0);
 
     socketInstance.on("connect", () => setIsConnected(true));
-    socketInstance.on("disconnect", () => setIsConnected(false));
+    socketInstance.on("userOffline", (userId: string) => {
+      console.log("🔴 userOffline event:", userId);
+      dispatch(removeOnlineUser(userId));
+    });
     socketInstance.on("userOnline", (users: string[]) => {
       dispatch(setOnlineUsers(users));
     });
