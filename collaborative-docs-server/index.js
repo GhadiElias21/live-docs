@@ -20,7 +20,7 @@ const io = new Server(httpServer, {
     origin: process.env.CLIENT_URL,
     credentials: true,
   },
-  transports: ["websocket"],
+  transports: ["websocket", "polling"],
   pingInterval: 5000,
   pingTimeout: 7000,
 });
