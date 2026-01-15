@@ -31,7 +31,7 @@ export default function DocumentPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState("");
 
-  const { typingUsers, emitChange } = useDocumentSocket({
+  const { typingUsers, emitChange, emitCursor, cursors } = useDocumentSocket({
     socket,
     isConnected,
     documentId: id,
@@ -138,7 +138,13 @@ export default function DocumentPage() {
           </AnimatePresence>
         </div>
 
-        <DocumentEditor content={content} setContent={handleContentChange} />
+        <DocumentEditor
+          content={content}
+          setContent={handleContentChange}
+          emitCursor={emitCursor}
+          cursors={cursors}
+        />
+
         <DocumentFooter content={content} />
       </main>
     </motion.div>

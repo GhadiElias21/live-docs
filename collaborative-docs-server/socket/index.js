@@ -30,9 +30,13 @@ export const initSocket = (io) => {
     socket.on("stop-typing", ({ documentId, username }) => {
       socket.to(documentId).emit("user-stopped-typing", username);
     });
+    socket.on("cursor-update", ({ documentId, cursor }) => {
+      socket.to(documentId).emit("cursor-update", cursor);
+    });
     socket.on("disconnect", () => {
       onlineUsers.delete(userId);
       io.emit("userOffline", userId);
+      socket.broadcast.emit("cursor-remove", userId);
     });
   });
 };

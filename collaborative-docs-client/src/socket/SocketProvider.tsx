@@ -49,7 +49,6 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
 
     socketInstance.on("connect", () => setIsConnected(true));
     socketInstance.on("userOffline", (userId: string) => {
-      console.log("🔴 userOffline event:", userId);
       dispatch(removeOnlineUser(userId));
     });
     socketInstance.on("userOnline", (users: string[]) => {
